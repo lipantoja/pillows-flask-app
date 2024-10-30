@@ -55,3 +55,16 @@ def pillows_all():
         """
     ).fetchall()
     return [dict(row) for row in rows]
+
+def pillows_create(name, image_url, description, size):
+    conn = connect_to_db()
+    row = conn.execute(
+        """
+        INSERT INTO pillows (name, image_url, description, size)
+        VALUES (?, ?, ?, ?)
+        RETURNING *
+        """,
+        (name, image_url, description, size),
+    ).fetchone()
+    conn.commit()
+    return dict(row)
