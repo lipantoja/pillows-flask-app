@@ -19,3 +19,7 @@ def create():
     description = request.form.get("description")
     size = request.form.get("size")
     return db.pillows_create(name, image_url, description, size)
+
+@app.route("/pillows/<id>.json")
+def show(id):
+    return db.pillows_find_by_id(id)

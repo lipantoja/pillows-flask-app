@@ -68,3 +68,14 @@ def pillows_create(name, image_url, description, size):
     ).fetchone()
     conn.commit()
     return dict(row)
+
+def pillows_find_by_id(id):
+    conn = connect_to_db()
+    row = conn.execute(
+        """
+        SELECT * FROM pillows
+        WHERE id = ?
+        """,
+        (id,),
+    ).fetchone()
+    return dict(row)
