@@ -11,34 +11,33 @@ def initial_setup():
     conn = connect_to_db()
     conn.execute(
         """
-        DROP TABLE IF EXISTS photos;
+        DROP TABLE IF EXISTS pillows;
         """
     )
     conn.execute(
         """
-        CREATE TABLE photos (
+        CREATE TABLE pillows (
           id INTEGER PRIMARY KEY NOT NULL,
           name TEXT,
-          width INTEGER,
-          height INTEGER
+          image_url TEXT,
+          description TEXT,
+          size TEXT
         );
         """
     )
     conn.commit()
     print("Table created successfully")
 
-    photos_seed_data = [
-        ("1st photo", 800, 400),
-        ("2nd photo", 1024, 768),
-        ("3rd photo", 200, 150),
+    pillows_seed_data = [
+        ("1st pillow", "https://cdn11.bigcommerce.com/s-r7rkk91ha4/images/stencil/1280x1280/products/440/3843/Garfield_1__36923.1729699225.jpg?c=1", "Garfield the Cat, as a pillow", "Medium")
     ]
     conn.executemany(
         """
-        INSERT INTO photos (name, width, height)
-        VALUES (?,?,?)
+        INSERT INTO pillows (name, image_url, description, size)
+        VALUES (?,?,?,?)
         """,
-        photos_seed_data,
-    )
+        pillows_seed_data,
+    ) 
     conn.commit()
     print("Seed data created successfully")
 
@@ -47,3 +46,12 @@ def initial_setup():
 
 if __name__ == "__main__":
     initial_setup()
+
+def pillows_all():
+    conn = connect_to_db()
+    rows = conn.execute(
+        """
+        SELECT * FROM pillows
+        """
+    ).fetchall()
+    return [dict(row) for row in rows]
