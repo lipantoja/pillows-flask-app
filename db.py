@@ -151,5 +151,18 @@ def get_user_by_id(user_id):
     conn.close()
     return dict(row) if row else None
 
+def create_session(user_id, token, expires_at):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO sessions (user_id, token, expires_at)
+        VALUES (?, ?, ?)
+        """,
+        (user_id, token, expires_at)
+    )
+    conn.commit()
+    conn.close()
+
 if __name__ == "__main__":
     initial_setup()

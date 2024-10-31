@@ -1,6 +1,7 @@
 import db
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+from auth import signup, login, require_auth, get_current_user
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:5000"}})
@@ -32,3 +33,19 @@ def update(id):
     description = request.form.get("description")
     size = request.form.get("size")
     return db.pillows_update_by_id(id, name, image_url, description, size)
+
+app.add_url_rule('/api/auth/signup', 'signup', signup, methods=['POST'])
+app.add_url_rule('/api/auth/login', 'login', login, methods=['POST'])
+
+@app.route('/api/protected')
+@require_auth
+def protected_route():
+    current_user = get_current_user()
+    return jsonify({
+        'message': 'This is a protected route',
+        'user': {
+            'id': current_user['id'],
+            'email': current_user['email'],
+            'name': current_user['name']
+        }
+    })
