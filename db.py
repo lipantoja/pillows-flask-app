@@ -53,7 +53,7 @@ def initial_setup():
     
     pillows_seed_data = [
         ("1st pillow", "https://cdn11.bigcommerce.com/s-r7rkk91ha4/images/stencil/1280x1280/products/440/3843/Garfield_1__36923.1729699225.jpg?c=1", "Garfield the Cat, as a pillow", "Medium"),
-        ("2nd pillow", "https://morismos.com/cdn/shop/files/capybara-stuffed-animals-Capybara-plush-toys-long-bed-throw-pillows-cheap-plushies-sofa-body-pillows-bulk-stuffed-animals-wholesale-plush-toys-birthday-gift-guide.jpg?v=1714985781", "Capybara pillow, suitable for all ages.", "Small")
+        ("2nd pillow", "https://morismos.com/cdn/shop/files/capybara-stuffed-animals-Capybara-plush-toys-long-bed-throw-pillows-cheap-plushies-sofa-body-pillows-bulk-stuffed-animals-wholesale-plush-toys-birthday-gift-guide.jpg?v=1714985781", "Capybara pillow, suitable for all ages.", "Small"),  ("Distroy this Pillow", "https://morismos.com/cdn/shop/files/capybara-stuffed-animals-Capybara-plush-toys-long-bed-throw-pillows-cheap-plushies-sofa-body-pillows-bulk-stuffed-animals-wholesale-plush-toys-birthday-gift-guide.jpg?v=1714985781", "Must be destoryed", "Small")
     ]
     
     conn.executemany(
@@ -114,6 +114,17 @@ def pillows_update_by_id(id, name, image_url, description, size):
     conn.commit()
     return dict(row)
 
+def pillows_destroy_by_id(id):
+    conn = connect_to_db()
+    row = conn.execute(
+        """
+        DELETE from pillows
+        WHERE id = ?
+        """,
+        (id,),
+    )
+    conn.commit()
+    return {"message": "Poof! A pillow has been destroyed successfully"}
 def create_user(email, password, name):
     conn = connect_to_db()
     cursor = conn.cursor()
