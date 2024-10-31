@@ -34,7 +34,10 @@ def update(id):
     size = request.form.get("size")
     return db.pillows_update_by_id(id, name, image_url, description, size)
 
-<<<<<<< HEAD
+@app.route("/pillows/<id>.json", methods=["DELETE"])
+def destroy(id):
+    return db.pillows_destroy_by_id(id)
+
 app.add_url_rule('/api/auth/signup', 'signup', signup, methods=['POST'])
 app.add_url_rule('/api/auth/login', 'login', login, methods=['POST'])
 
@@ -50,8 +53,3 @@ def protected_route():
             'name': current_user['name']
         }
     })
-=======
-@app.route("/pillows/<id>.json", methods=["DELETE"])
-def destroy(id):
-    return db.pillows_destroy_by_id(id)
->>>>>>> fd827f4b50f876209d541426dc3fcd9a07925504

@@ -125,6 +125,7 @@ def pillows_destroy_by_id(id):
     )
     conn.commit()
     return {"message": "Poof! A pillow has been destroyed successfully"}
+
 def create_user(email, password, name):
     conn = connect_to_db()
     cursor = conn.cursor()
