@@ -11,20 +11,16 @@ JWT_EXPIRATION = 24 * 60 * 60
 def signup():
     data = request.get_json()
     
-    # Check for required fields
     required_fields = ['email', 'password', 'password_confirmation', 'name']
     if not all(field in data for field in required_fields):
         return jsonify({'errors': ['Missing required fields']}), 400
     
-    # Validate password confirmation
     if data['password'] != data['password_confirmation']:
         return jsonify({'errors': ['Password confirmation does not match']}), 400
     
-    # Check if user already exists
     if get_user_by_email(data['email']):
         return jsonify({'errors': ['Email has already been taken']}), 400
 
-    # Hash password
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), salt)
     
@@ -32,8 +28,9 @@ def signup():
         user_id = create_user(
             email=data['email'],
             password=hashed_password,
-            name=data['name']
-        )
+            name=data['name'],
+            password_confirmation=data['password_confirmation']\
+            )
         return jsonify({'message': 'User created successfully'}), 201
     except Exception as e:
         return jsonify({'errors': [str(e)]}), 400
@@ -71,8 +68,7 @@ def current_user():
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return None
-        
-    # Extract token from "Bearer <token>"
+  
     token_match = auth_header.split(' ')
     if len(token_match) != 2:
         return None
