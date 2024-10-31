@@ -32,3 +32,7 @@ def update(id):
     description = request.form.get("description")
     size = request.form.get("size")
     return db.pillows_update_by_id(id, name, image_url, description, size)
+
+@app.route("/pillows/<id>.json", methods=["DELETE"])
+def destroy(id):
+    return db.pillows_destroy_by_id(id)
