@@ -27,9 +27,10 @@ def initial_setup():
         """
         CREATE TABLE users (
             id INTEGER PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL,
             email TEXT NOT NULL,
             password TEXT NOT NULL,
-            name TEXT NOT NULL,
+            password_confirmation TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """
@@ -126,15 +127,15 @@ def pillows_destroy_by_id(id):
     conn.commit()
     return {"message": "Poof! A pillow has been destroyed successfully"}
 
-def create_user(email, password, name):
+def create_user(name, email, password, password_confirmation):
     conn = connect_to_db()
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO users (email, password, name)
-        VALUES (?, ?, ?)
+        INSERT INTO users (name, email, password, password_confirmation)
+        VALUES (?, ?, ?, ?)
         """,
-        (email, password, name)
+        (name, email, password, password_confirmation)
     )
     conn.commit()
     user_id = cursor.lastrowid

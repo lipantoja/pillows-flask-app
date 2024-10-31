@@ -1,88 +1,99 @@
 from functools import wraps
 from flask import request, jsonify, g
 import jwt
-import time
+from datetime import datetime, timedelta
 import bcrypt
 from db import create_user, get_user_by_email, get_user_by_id
 
-JWT_SECRET = 'your-secret-key'  # Store this securely in environment variables
-JWT_EXPIRATION = 24 * 60 * 60  # 24 hours in seconds
-
+JWT_SECRET = 'your-secret-key'
+JWT_EXPIRATION = 24 * 60 * 60
 
 def signup():
     data = request.get_json()
-    if not data or not data.get('email') or not data.get('password'):
-        return jsonify({'error': 'Missing required fields'}), 400
     
-    if get_user_by_email(data.get('email')):
-        return jsonify({'error': 'Email already registered'}), 400
+    # Check for required fields
+    required_fields = ['email', 'password', 'password_confirmation', 'name']
+    if not all(field in data for field in required_fields):
+        return jsonify({'errors': ['Missing required fields']}), 400
     
+    # Validate password confirmation
+    if data['password'] != data['password_confirmation']:
+        return jsonify({'errors': ['Password confirmation does not match']}), 400
+    
+    # Check if user already exists
+    if get_user_by_email(data['email']):
+        return jsonify({'errors': ['Email has already been taken']}), 400
+
+    # Hash password
     salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(data.get('password').encode('utf-8'), salt)
+    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), salt)
     
     try:
         user_id = create_user(
-            email=data.get('email'),
-            password=hashed,
-            name=data.get('name')
+            email=data['email'],
+            password=hashed_password,
+            name=data['name']
         )
-        return jsonify({'message': 'User created successfully', 'user_id': user_id}), 201
+        return jsonify({'message': 'User created successfully'}), 201
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'errors': [str(e)]}), 400
 
 def login():
     data = request.get_json()
-    if not data or not data.get('email') or not data.get('password'):
-        return jsonify({'error': 'Missing required fields'}), 400
     
-    user = get_user_by_email(data.get('email'))
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({'errors': ['Invalid email/password combination']}), 401
+
+    user = get_user_by_email(data['email'])
     if not user:
-        return jsonify({'error': 'Invalid credentials'}), 401
+        return jsonify({'errors': ['Invalid email/password combination']}), 401
 
     stored_password = user['password']
     if isinstance(stored_password, str):
         stored_password = stored_password.encode('utf-8')
-        
-    if bcrypt.checkpw(data.get('password').encode('utf-8'), stored_password):
+
+    if bcrypt.checkpw(data['password'].encode('utf-8'), stored_password):
+        expiration_time = datetime.utcnow() + timedelta(hours=24)
         token = jwt.encode({
             'user_id': user['id'],
-            'exp': int(time.time()) + JWT_EXPIRATION
+            'exp': int(expiration_time.timestamp())
         }, JWT_SECRET, algorithm='HS256')
         
         return jsonify({
-            'token': token,
+            'jwt': token,
             'email': user['email'],
             'user_id': user['id']
-        }), 200
+        }), 201
     
-    return jsonify({'error': 'Invalid credentials'}), 401
+    return jsonify({'errors': ['Invalid email/password combination']}), 401
 
-def require_auth(f):
+def current_user():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return None
+        
+    # Extract token from "Bearer <token>"
+    token_match = auth_header.split(' ')
+    if len(token_match) != 2:
+        return None
+        
+    token = token_match[1]
+    
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+        user = get_user_by_id(payload['user_id'])
+        return user
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+def authenticate_user(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            try:
-                token = auth_header.split(" ")[1]  # Bearer <token>
-            except IndexError:
-                return jsonify({'error': 'Invalid token format'}), 401
-        
-        if not token:
-            return jsonify({'error': 'Token is missing'}), 401
-
-        try:
-            payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
-            g.current_user = get_user_by_id(payload['user_id'])
-            if not g.current_user:
-                return jsonify({'error': 'User not found'}), 401
-        except jwt.ExpiredSignatureError:
-            return jsonify({'error': 'Token has expired'}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({'error': 'Invalid token'}), 401
-
+        user = current_user()
+        if not user:
+            return jsonify({}), 401
+        g.current_user = user
         return f(*args, **kwargs)
     return decorated
-
-def get_current_user():
-    return getattr(g, 'current_user', None)

@@ -1,10 +1,10 @@
 import db
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
-from auth import signup, login, require_auth, get_current_user
+from auth import signup, login, authenticate_user
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "http://localhost:5000"}})
+cors = CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 @app.route('/')
 def hello():
@@ -38,18 +38,24 @@ def update(id):
 def destroy(id):
     return db.pillows_destroy_by_id(id)
 
-app.add_url_rule('/api/auth/signup', 'signup', signup, methods=['POST'])
-app.add_url_rule('/api/auth/login', 'login', login, methods=['POST'])
+@app.route('/auth/signup', methods=['POST'])
+def signup_route():
+    return signup()
 
-@app.route('/api/protected')
-@require_auth
-def protected_route():
-    current_user = get_current_user()
+@app.route('/auth/login', methods=['POST'])
+def login_route():
+    return login()
+
+@app.route('/auth/me', methods=['GET'])
+@authenticate_user
+def me():
     return jsonify({
-        'message': 'This is a protected route',
         'user': {
-            'id': current_user['id'],
-            'email': current_user['email'],
-            'name': current_user['name']
+            'id': g.current_user['id'],
+            'email': g.current_user['email'],
+            'name': g.current_user['name']
         }
     })
+
+if __name__ == "__main__":
+    app.run(debug=True)
