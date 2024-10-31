@@ -4,7 +4,11 @@ from flask_cors import CORS
 from auth import signup, login, authenticate_user
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+cors = CORS(app, resources={r"/*": {
+    "origins": ["http://localhost:5173", "http://localhost:5000"],
+    "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Authorization"]
+}})
 
 @app.route('/')
 def hello():
@@ -56,6 +60,11 @@ def me():
             'name': g.current_user['name']
         }
     })
+
+@app.after_request
+def after_request(response):
+    print(f"Response status: {response.status_code}")  # Debug print
+    return response
 
 if __name__ == "__main__":
     app.run(debug=True)

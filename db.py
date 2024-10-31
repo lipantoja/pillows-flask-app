@@ -140,41 +140,60 @@ def pillows_destroy_by_id(id):
     return {"message": "Poof! A pillow has been destroyed successfully"}
 
 def create_user(name, email, password, password_confirmation):
-    conn = connect_to_db()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO users (name, email, password, password_confirmation)
-        VALUES (?, ?, ?, ?)
-        """,
-        (name, email, password, password_confirmation)
-    )
-    conn.commit()
-    user_id = cursor.lastrowid
-    conn.close()
-    return user_id
+    conn = None
+    try:
+        conn = connect_to_db()
+        row = conn.execute(
+            """
+            INSERT INTO users (name, email, password, password_confirmation)
+            VALUES (?, ?, ?, ?)
+            """,
+            (name, email, password, password_confirmation),
+        )
+        user_id = row.lastrowid
+        conn.commit()
+        # Fetch the created user to return
+        created_user = conn.execute(
+            "SELECT * FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        return user_id
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise e
+    finally:
+        if conn:
+            conn.close()
 
 def get_user_by_email(email):
-    conn = connect_to_db()
-    row = conn.execute(
-        """
-        SELECT * FROM users WHERE email = ?
-        """,
-        (email,)
-    ).fetchone()
-    conn.close()
-    return dict(row) if row else None
+    conn = None
+    try:
+        conn = connect_to_db()
+        row = conn.execute(
+            """
+            SELECT * FROM users WHERE email = ?
+            """,
+            (email,)
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        if conn:
+            conn.close()
 
 def get_user_by_id(user_id):
-    conn = connect_to_db()
-    row = conn.execute(
-        """
-        SELECT * FROM users WHERE id = ?
-        """,
-        (user_id,)
-    ).fetchone()
-    conn.close()
-    return dict(row) if row else None
+    conn = None
+    try:
+        conn = connect_to_db()
+        row = conn.execute(
+            """
+            SELECT * FROM users WHERE id = ?
+            """,
+            (user_id,)
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        if conn:
+            conn.close()
 
 def create_session(user_id, token, expires_at):
     conn = connect_to_db()
