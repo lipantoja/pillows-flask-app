@@ -25,6 +25,17 @@ def initial_setup():
         );
         """
     )
+    # conn.execute(
+    #     """
+    #     CREATE TABLE orders (
+    #       id INTEGER PRIMARY KEY NOT NULL,
+    #       id user_id INTEGER PRIMARY KEY NOT NULL,
+    #       image_url TEXT,
+    #       description TEXT,
+    #       size TEXT
+    #     );
+    #     """
+    # )
     conn.commit()
     print("Table created successfully")
 
