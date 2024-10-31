@@ -1,9 +1,10 @@
 import db
-from flask import Flask, request
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
+from auth import signup, login, authenticate_user
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "http://localhost:5000"}})
+cors = CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 @app.route('/')
 def hello():
@@ -36,3 +37,25 @@ def update(id):
 @app.route("/pillows/<id>.json", methods=["DELETE"])
 def destroy(id):
     return db.pillows_destroy_by_id(id)
+
+@app.route('/auth/signup', methods=['POST'])
+def signup_route():
+    return signup()
+
+@app.route('/auth/login', methods=['POST'])
+def login_route():
+    return login()
+
+@app.route('/auth/me', methods=['GET'])
+@authenticate_user
+def me():
+    return jsonify({
+        'user': {
+            'id': g.current_user['id'],
+            'email': g.current_user['email'],
+            'name': g.current_user['name']
+        }
+    })
+
+if __name__ == "__main__":
+    app.run(debug=True)
