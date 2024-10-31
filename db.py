@@ -10,6 +10,7 @@ def initial_setup():
     conn.execute("DROP TABLE IF EXISTS pillows")
     conn.execute("DROP TABLE IF EXISTS users")
     conn.execute("DROP TABLE IF EXISTS sessions")
+    conn.execute("DROP TABLE IF EXISTS orders")
 
     conn.execute(
         """
@@ -21,6 +22,16 @@ def initial_setup():
             size TEXT
         );
         """
+    )
+    conn.execute(
+    """
+    CREATE TABLE orders (
+      id INTEGER PRIMARY KEY NOT NULL,
+      subtotal INTEGER NOT NULL,
+      tax INTEGER NOT NULL,
+      total INTEGER NOT NULL
+    );
+    """
     )
     
     conn.execute(
@@ -51,6 +62,7 @@ def initial_setup():
     
     conn.commit()
     print("Tables created successfully")
+    
     
     pillows_seed_data = [
         ("1st pillow", "https://cdn11.bigcommerce.com/s-r7rkk91ha4/images/stencil/1280x1280/products/440/3843/Garfield_1__36923.1729699225.jpg?c=1", "Garfield the Cat, as a pillow", "Medium"),
@@ -198,3 +210,4 @@ def create_session(user_id, token, expires_at):
 
 if __name__ == "__main__":
     initial_setup()
+
